@@ -1,0 +1,3 @@
+psql 
+username : cherry 
+psswd : asdfuiop
