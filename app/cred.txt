@@ -1,3 +1,7 @@
 psql 
 username : cherry 
-psswd : asdfuiop
+psswd : asdfuiop 
+
+
+username:quant_user
+psswd: 14369

@@ -1,8 +1,18 @@
 
-from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, JSON, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, JSON, ForeignKey, BigInteger, Index
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
-from datetime import datetime
+from datetime import datetime, timezone
+from sqlalchemy import UniqueConstraint, Index, DateTime, BigInteger
+
+
+# ... your models here (unchanged) ...
+# change volume type to BigInteger (if desired) and date/time columns to timezone-aware
+# e.g. date = Column(DateTime(timezone=True), index=True)
+# created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+# Database connection (use settings.DATABASE_URL)
+from app.core.config import settings
 
 Base = declarative_base()
 
@@ -26,15 +36,20 @@ class User(Base):
 # Market Data Model
 class MarketData(Base):
     __tablename__ = 'market_data'
-    
     id = Column(Integer, primary_key=True)
-    symbol = Column(String(10), index=True)
-    date = Column(DateTime, index=True)
+    symbol = Column(String(20), index=True, nullable=False)
+    date = Column(DateTime(timezone=True), index=True, nullable=False)
     open = Column(Float)
     high = Column(Float)
     low = Column(Float)
     close = Column(Float)
-    volume = Column(Integer)
+    adj_close = Column(Float)   # NEW
+    volume = Column(BigInteger)
+
+    __table_args__ = (
+        UniqueConstraint('symbol', 'date', name='uix_symbol_date'),
+        Index('ix_market_symbol_date', 'symbol', 'date'),
+    )
 
 # Portfolio Model
 class Portfolio(Base):
@@ -69,9 +84,12 @@ class Trade(Base):
     user = relationship("User", back_populates="trades")
 
 # Database connection
-DATABASE_URL = "postgresql://cherry:asdfuiop@localhost/quant_trading_db"
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(bind=engine)
+
+
+DATABASE_URL = settings.DATABASE_URL
+engine = create_engine(DATABASE_URL, pool_size=5, max_overflow=10)
+SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+
 
 # Create all tables
 def init_db():
