@@ -1,7 +1,0 @@
-psql 
-username : cherry 
-psswd : asdfuiop 
-
-
-username:quant_user
-psswd: 14369
